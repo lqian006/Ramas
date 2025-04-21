@@ -24,4 +24,5 @@ def Distance(n1,n2):
     distx = float(n2.coordx) - float(n1.coordx)
     disty = float(n2.coordy) - float(n1.coordy)
     dist = math.sqrt(distx**2+disty**2)
-    return dist
+    redond = round(dist,2)
+    return redond

@@ -1,0 +1,12 @@
+Girona 10 10
+Barcelona 7 6
+Tarragona 5 5
+Lleida 5 10
+
+Barcelona_Girona Barcelona Girona
+Girona_Barcelona Girona Barcelona
+Barcelona_Tarragona Barcelona Tarragona
+Tarragona_Barcelona Tarragona Barcelona
+Barcelona_Lleida Barcelona Lleida
+Lleida_Barcelona Lleida Barcelona
+Lleida_Tarragona Lleida Tarragona
