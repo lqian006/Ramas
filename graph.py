@@ -1,5 +1,3 @@
-from numpy.ma.core import indices
-
 from node import *
 from segment import *
 import matplotlib.pyplot as plt
@@ -115,11 +113,43 @@ def FileGraph (g, file_name):
     F.close()
     Plot(g)
 
-'''for node in g.nodes:
-    plt.plot(node.coordx,node.coordy,marker="o",color="blue")
-    plt.text(node.coordx+0.5,node.coordy+0.5,node.name,fontsize=5)
-for element in g.segments:
-    plt.annotate("",(element.destination_node.coordx,element.destination_node.coordy),(element.origin_node.coordx,element.origin_node.coordy),arrowprops=dict(arrowstyle="->", color="red", lw=1.5))
-    plt.text((element.origin_node.coordx+element.destination_node.coordx)/2,(element.origin_node.coordy+element.destination_node.coordy)/2,element.cost,fontsize=5)
-plt.grid(True)
-plt.show()'''
+def CreateGraph_1 ():
+    G = Graph()
+    AddNode(G, Node("A",1,20))
+    AddNode(G, Node("B",8,17))
+    AddNode(G, Node("C",15,20))
+    AddNode(G, Node("D",18,15))
+    AddNode(G, Node("E",2,4))
+    AddNode(G, Node("F",6,5))
+    AddNode(G, Node("G",12,12))
+    AddNode(G, Node("H",10,3))
+    AddNode(G, Node("I",19,1))
+    AddNode(G, Node("J",13,5))
+    AddNode(G, Node("K",3,15))
+    AddNode(G, Node("L",4,10))
+    AddSegment(G,"AB","A","B")
+    AddSegment(G,"AE","A","E")
+    AddSegment(G,"AK","A","K")
+    AddSegment(G,"BA","B","A")
+    AddSegment(G,"BC","B","C")
+    AddSegment(G,"BF","B","F")
+    AddSegment(G,"BK","B","K")
+    AddSegment(G,"BG","B","G")
+    AddSegment(G,"CD","C","D")
+    AddSegment(G,"CG","C","G")
+    AddSegment(G,"DG","D","G")
+    AddSegment(G,"DH","D","H")
+    AddSegment(G,"DI","D","I")
+    AddSegment(G,"EF","E","F")
+    AddSegment(G,"FL","F","L")
+    AddSegment(G,"GB","G","B")
+    AddSegment(G,"GF","G","F")
+    AddSegment(G,"GH","G","H")
+    AddSegment(G,"ID","I","D")
+    AddSegment(G,"IJ","I","J")
+    AddSegment(G,"JI","J","I")
+    AddSegment(G,"KA","K","A")
+    AddSegment(G,"KL","K","L")
+    AddSegment(G,"LK","L","K")
+    AddSegment(G,"LF","L","F")
+    return G
