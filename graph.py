@@ -25,6 +25,7 @@ def AddNode(g,n):
 def AddSegment  (g, name, nameOriginNode, nameDestinationNode):
     found1 = False
     found2 = False
+    found3 = False
     node1 = None
     node2 = None
     for node in g.nodes:
@@ -34,7 +35,13 @@ def AddSegment  (g, name, nameOriginNode, nameDestinationNode):
         if nameDestinationNode == node.name:
             found2 = True
             node2 = node
-    if found1 == True and found2 == True:
+    for segments in g.segments:
+        if segments.origin_node == node1 and segments.destination_node == node2:
+            found3 = True
+    if found3:
+        print("El segmento ya existe.")
+        return False
+    elif found1 == True and found2 == True:
         g.segments.append(segment(name,node1,node2))
     else:
         print("Uno de los nodos no está en la llista de nodos.")
@@ -62,7 +69,6 @@ def Plot (g):
         plt.text((linea.origin_node.coordx+linea.destination_node.coordx)/2,(linea.origin_node.coordy+linea.destination_node.coordy)/2,linea.cost,fontsize=7.5)
     plt.margins(x=0.25,y=0.25)
     plt.grid(True)
-    plt.show()
 
 def PlotNode (g, nameOrigin):
     node1 = None
@@ -92,7 +98,6 @@ def PlotNode (g, nameOrigin):
                  (node1.coordy + segment.coordy) / 2, Distance(node1,segment), fontsize=7.5)
     plt.grid(True)
     plt.margins(x=0.25,y=0.25)
-    plt.show()
 
 def FileGraph (g, file_name):
     F = open("{}".format(file_name),"r")
@@ -100,7 +105,7 @@ def FileGraph (g, file_name):
     i = 0
     while linea != "\n":
         datos1 = linea.split()
-        AddNode(g,Node(datos1[0],int(datos1[1]),int(datos1[2])))
+        AddNode(g,Node(datos1[0],float(datos1[1]),float(datos1[2])))
         i += 1
         linea = F.readline()
     i += 1
@@ -153,3 +158,32 @@ def CreateGraph_1 ():
     AddSegment(G,"LK","L","K")
     AddSegment(G,"LF","L","F")
     return G
+
+def deletenode (g, n):
+    i = 0
+    node1 = None
+    for node in g.nodes:
+        if node.name == n:
+            node1 = node
+    while i < len(g.segments):
+        if node1 == g.segments[i].origin_node or node1 == g.segments[i].destination_node:
+            g.segments.remove(g.segments[i])
+            i -= 1
+        i += 1
+
+    if node1 is None:
+        return False
+    else:
+        g.nodes.remove(node1)
+        return True
+
+def deleteseg (g, n):
+    seg = None
+    for element in g.segments:
+        if element.name == n:
+            seg = element
+    if seg is not None:
+        g.segments.remove(seg)
+        return True
+    else:
+        return False

@@ -7,136 +7,473 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from graph import *
 
-global current_graph
+current_graph = None        #gráfica actual
+graphcanvas = None          #widget del canvas
+figuracanvas = None         #figura que tiene la gráfica en cada instante
+clic = None                 #dónde está conectada la función de detectar clic?
+usonodos = False            #la opcion de detectar clic está activada?
+usoseg = False              #la opcion de detectar clic está activada?
+contnode = 1                #numero de nodos añadidos manualmente
+contseg = 1                 #número de segmentos añadidos manualmente
+contnodseg = 1
+punto = None                #coordenadas del último clic
+punto1 = None
+punto2 = None
 
-def canvasplot(g, space):
-    fig = Figure(figsize=(6,5))
-    ax = fig.add_subplot(111)
-    for punto in g.nodes:
-        ax.plot(punto.coordx,punto.coordy, marker = "o", color = "red")
-        ax.text(punto.coordx+0.25, punto.coordy+0.25, punto.name, fontsize = 7.5, color = "green")
-    for linea in g.segments:
-        ax.annotate("",
-                    (linea.destination_node.coordx,linea.destination_node.coordy),
-                    (linea.origin_node.coordx,linea.origin_node.coordy),
-                    arrowprops=dict(arrowstyle="->", color="blue",lw=1.5))
-        ax.text((linea.origin_node.coordx+linea.destination_node.coordx)/2,(linea.origin_node.coordy+linea.destination_node.coordy)/2,linea.cost,fontsize=7.5)
-    ax.margins(x=0.25,y=0.25)
-    ax.grid(True)
-
-    canvas = FigureCanvasTkAgg(fig, master=space)
-    canvas.draw()
-    canvas.get_tk_widget().grid(column=0, row=0, sticky="nsew")
-
-def canvasfile(g, file_name):
-    F = open("{}".format(file_name), "r")
-    linea = F.readline()
-    i = 0
-    while linea != "\n":
-        datos1 = linea.split()
-        AddNode(g, Node(datos1[0], int(datos1[1]), int(datos1[2])))
-        i += 1
-        linea = F.readline()
-    i += 1
-    linea = F.readline()
-    while linea != "":
-        datos2 = linea.split()
-        AddSegment(g, datos2[0], datos2[1], datos2[2])
-        i += 1
-        linea = F.readline()
-    F.close()
-    canvasplot(g,canvas_picture)
-
-def canvasplotnode(g, space, nameOrigin):
-    fig = Figure(figsize=(6,5))
-    ax = fig.add_subplot(111)
-    node1 = None
-    found = False
-    neighbors = []
-    for node in g.nodes:
-        if node.name == nameOrigin:
-            node1 = node
-            found = True
-    if found == False:
-        return False
-    ax.plot(node1.coordx, node1.coordy, color="blue", marker="o")
-    ax.text(node1.coordx + 0.5, node1.coordy + 0.5, node1.name, fontsize=7.5)
-    for point in node1.neighbors:
-        ax.plot(point.coordx, point.coordy, color="green", marker="o")
-        ax.text(point.coordx + 0.5, point.coordy + 0.5, point.name, fontsize=7.5)
-        neighbors.append(point)
-    for element in g.nodes:
-        if element != node1 and element not in neighbors:
-            ax.plot(element.coordx, element.coordy, color="gray", marker="o")
-            ax.text(element.coordx + 0.25, element.coordy + 0.25, element.name, fontsize=7.5)
-    for segment in neighbors:
-        ax.annotate("", (segment.coordx, segment.coordy),
-                     (node1.coordx, node1.coordy),
-                     arrowprops=dict(arrowstyle="->", color="red", lw=1.5))
-        ax.text((node1.coordx + segment.coordx) / 2,
-                 (node1.coordy + segment.coordy) / 2, Distance(node1, segment), fontsize=7.5)
-    ax.grid(True)
-    ax.margins(x=0.25, y=0.25)
-
-    canvas = FigureCanvasTkAgg(fig, master=space)
-    canvas.draw()
-    canvas.get_tk_widget().grid(column=0, row=0, sticky="nsew")
+def detectclick(event):
+    global punto
+    x = round(event.xdata,3)
+    y = round(event.ydata,3)
+    punto = [x,y]
+    print(punto)
 
 def showexamplegraph():
-    global current_graph
+    global current_graph, graphcanvas, figuracanvas, contnodseg
     current_graph = CreateGraph_1()
-    canvasplot(current_graph,canvas_picture)
+    if graphcanvas is not None:
+        graphcanvas.destroy()
+    fig, ax = plt.subplots()
+    Plot(current_graph)
+    figuracanvas = FigureCanvasTkAgg(fig, master=graphshow)
+    figuracanvas.draw()
+    figuracanvas.mpl_connect("button_press_event", detectclick)
+    graphcanvas = figuracanvas.get_tk_widget()
+    graphcanvas.config(width=800, height=600)
+    graphcanvas.pack()
+    contnodseg = 0
+
 
 def showfilegraph():
-    global current_graph
+    global current_graph, graphcanvas, figuracanvas
     current_graph = Graph()
-    canvasfile(current_graph, infile.get())
+    if graphcanvas is not None:
+        graphcanvas.destroy()
+    fig, ax = plt.subplots()
+    FileGraph(current_graph, str(infile.get()))
+    infile.delete(0, tk.END)
+    figuracanvas = FigureCanvasTkAgg(fig, master=graphshow)
+    figuracanvas.draw()
+    figuracanvas.mpl_connect("button_press_event", detectclick)
+    graphcanvas = figuracanvas.get_tk_widget()
+    graphcanvas.config(width=800, height=600)
+    graphcanvas.pack()
 
 def shownode():
-    global current_graph
-    canvasplotnode(current_graph, canvas_picture, str(selnode.get()))
+    global current_graph, graphcanvas, figuracanvas
+    if graphcanvas is not None:
+        graphcanvas.destroy()
+    fig, ax = plt.subplots()
+    PlotNode(current_graph, str(selnode.get()))
+    figuracanvas = FigureCanvasTkAgg(fig, master=graphshow)
+    figuracanvas.draw()
+    figuracanvas.mpl_connect("button_press_event", detectclick)
+    graphcanvas = figuracanvas.get_tk_widget()
+    graphcanvas.config(width=800, height=600)
+    graphcanvas.pack()
 
+def addnodei():
+    global current_graph, graphcanvas, figuracanvas
+    if current_graph is None:
+        messagebox.showerror("Error","No existe grafo al que añadir el nodo.")
+    else:
+        AddNode(current_graph, Node(str(nodename.get()),float(nodex.get()),float(nodey.get())))
+        nodename.delete(0,tk.END)
+        nodex.delete(0,tk.END)
+        nodey.delete(0,tk.END)
+        if graphcanvas is not None:
+            graphcanvas.destroy()
+        fig, ax = plt.subplots()
+        Plot(current_graph)
+        figuracanvas = FigureCanvasTkAgg(fig, master=graphshow)
+        figuracanvas.draw()
+        figuracanvas.mpl_connect("button_press_event", detectclick)
+        graphcanvas = figuracanvas.get_tk_widget()
+        graphcanvas.config(width=800, height=600)
+        graphcanvas.pack()
+
+def addsegmenti():
+    global current_graph, graphcanvas, figuracanvas
+    if current_graph is None:
+        messagebox.showerror("Error", "No existe grafo al que añadir el segmento.")
+    elif AddSegment(current_graph, segmentname.get(), segmentorigin.get(), segmentdestination.get()):
+        segmentname.delete(0, tk.END)
+        segmentorigin.delete(0, tk.END)
+        segmentdestination.delete(0, tk.END)
+        if graphcanvas is not None:
+            graphcanvas.destroy()
+        fig, ax = plt.subplots()
+        Plot(current_graph)
+        figuracanvas = FigureCanvasTkAgg(fig, master=graphshow)
+        figuracanvas.draw()
+        figuracanvas.mpl_connect("button_press_event", detectclick)
+        graphcanvas = figuracanvas.get_tk_widget()
+        graphcanvas.config(width=800, height=600)
+        graphcanvas.pack()
+    else:
+        messagebox.showerror("Error", "Uno de los nodos no existe en el grafo")
+
+def deletenodei():
+    global current_graph, graphcanvas, figuracanvas
+    if current_graph is None:
+        messagebox.showerror("Error", "No existe grafo del que borrar nodo")
+    else:
+        if inborrarnodo.get():
+            nodoborrar = str(inborrarnodo.get())
+            if not deletenode(current_graph,nodoborrar):
+                messagebox.showerror("Error","No existe ese nodo en el grafo actual.")
+            else:
+                inborrarnodo.delete(0, tk.END)
+                if graphcanvas is not None:
+                    graphcanvas.destroy()
+                fig, ax = plt.subplots()
+                Plot(current_graph)
+                figuracanvas = FigureCanvasTkAgg(fig, master=graphshow)
+                figuracanvas.draw()
+                figuracanvas.mpl_connect("button_press_event", detectclick)
+                graphcanvas = figuracanvas.get_tk_widget()
+                graphcanvas.config(width=800, height=600)
+                graphcanvas.pack()
+        elif inborrarseg.get():
+            segborrar = str(inborrarseg.get())
+            if not deleteseg(current_graph, segborrar):
+                messagebox.showerror("Error", "No existe segmento con ese nombre.\nPrueba a cambiar el orden de sus nodos")
+            else:
+                inborrarseg.delete(0, tk.END)
+                if graphcanvas is not None:
+                    graphcanvas.destroy()
+                fig, ax = plt.subplots()
+                Plot(current_graph)
+                figuracanvas = FigureCanvasTkAgg(fig, master=graphshow)
+                figuracanvas.draw()
+                figuracanvas.mpl_connect("button_press_event", detectclick)
+                graphcanvas = figuracanvas.get_tk_widget()
+                graphcanvas.config(width=800, height=600)
+                graphcanvas.pack()
+
+def createblank():
+    global current_graph, graphcanvas, figuracanvas, contnodseg, usonodos, usoseg
+    if graphcanvas is not None:
+        graphcanvas.destroy()
+    current_graph = Graph()
+    fig, ax = plt.subplots()
+    Plot(current_graph)
+    figuracanvas = FigureCanvasTkAgg(fig, master=graphshow)
+    figuracanvas.draw()
+    figuracanvas.mpl_connect("button_press_event", detectclick)
+    graphcanvas = figuracanvas.get_tk_widget()
+    graphcanvas.config(width=800, height=600)
+    graphcanvas.pack()
+    contnodseg = 0
+    usonodos = False
+    usoseg = False
+    print(usoseg, usonodos)
+    btnhandseg.config(bg="#f0f0f0")
+    btnhandnode.config(bg="#f0f0f0")
+
+def savegraph():
+    global current_graph
+    name = insave.get()+".txt"
+    F = open(name, "w")
+    for nodo in current_graph.nodes:
+        F.write("{} {} {}\n".format(nodo.name, nodo.coordx, nodo.coordy))
+        print("{} {} {}\n".format(nodo.name, nodo.coordx, nodo.coordy))
+    F.write("\n")
+    for segment in current_graph.segments:
+        F.write("{} {} {}\n".format(segment.name, segment.origin_node.name, segment.destination_node.name))
+        print("{} {} {}\n".format(segment.name, segment.origin_node.name, segment.destination_node.name))
+    F.close()
+    messagebox.showinfo("Guardar grafo", "El grafo se ha guardado correctamente.")
+    insave.delete(0, tk.END)
+
+def handnode():
+    global clic, usonodos, figuracanvas, current_graph, graphcanvas
+    if not usonodos:
+        usonodos = True
+        clic = figuracanvas.mpl_connect("button_press_event", addhandnode)
+        btnhandnode.config(bg="white")
+    elif usonodos:
+        usonodos = False
+        figuracanvas.mpl_disconnect(clic)
+        btnhandnode.config(bg="#f0f0f0")
+def addhandnode(event):
+    global contnode, current_graph, graphcanvas, figuracanvas, usoseg
+    if usonodos:
+        x = round(event.xdata,3)
+        y = round(event.ydata,3)
+        if AddNode(current_graph, Node("N"+str(contnode),x,y)):
+            contnode += 1
+        if graphcanvas is not None:
+            graphcanvas.destroy()
+        fig, ax = plt.subplots()
+        Plot(current_graph)
+        figuracanvas = FigureCanvasTkAgg(fig, master=graphshow)
+        figuracanvas.draw()
+        figuracanvas.mpl_connect("button_press_event", addhandnode)
+        graphcanvas = figuracanvas.get_tk_widget()
+        graphcanvas.config(width=800, height=600)
+        graphcanvas.pack()
+
+def handseg():
+    global clic, current_graph, figuracanvas, contseg, usoseg
+    if not usoseg:
+        usoseg = True
+        clic = figuracanvas.mpl_connect("button_press_event", addhandseg)
+        btnhandseg.config(bg="white")
+    elif usoseg:
+        usoseg = False
+        figuracanvas.mpl_disconnect(clic)
+        btnhandseg.config(bg="#f0f0f0")
+def addhandseg(event):
+    global contseg, current_graph, graphcanvas, figuracanvas, contnodseg, punto2, punto1, usoseg, usonodos
+    if usoseg:
+        x = round(event.xdata, 3)
+        y = round(event.ydata, 3)
+        if punto1 is None:
+            for node1 in current_graph.nodes:
+                if round(x) == round(node1.coordx) and round(y) == round(node1.coordy):
+                    punto1 = node1
+                    break
+                else:
+                    punto1 = [x,y]
+        elif punto1 is not None and punto2 is None:
+            for node2 in current_graph.nodes:
+                if round(x) == round(node2.coordx) and round(y) == round(node2.coordy):
+                    punto2 = node2
+                    break
+                else:
+                    punto2 = [x,y]
+        print(punto1, punto2)
+        if punto1 is not None and punto2 is not None:
+            if punto1 not in current_graph.nodes and punto2 not in current_graph.nodes:
+                AddNode(current_graph, Node("s"+str(contnodseg), punto1[0], punto1[1]))
+                contnodseg += 1
+                AddNode(current_graph, Node("s"+str(contnodseg), punto2[0], punto2[1]))
+                contnodseg += 1
+                AddSegment(current_graph, "S"+str(contseg), "s"+str(contnodseg-2), "s"+str(contnodseg-1))
+                contseg += 1
+            elif punto1 in current_graph.nodes and punto2 not in current_graph.nodes:
+                AddNode(current_graph, Node("s"+str(contnodseg), punto2[0], punto2[1]))
+                contnodseg += 1
+                AddSegment(current_graph, "S"+str(contseg), punto1.name, "s"+str(contnodseg-1))
+                contseg += 1
+            elif punto1 not in current_graph.nodes and punto2 in current_graph.nodes:
+                AddNode(current_graph, Node("s"+str(contnodseg), punto1[0], punto1[1]))
+                contnodseg += 1
+                AddSegment(current_graph, "S"+str(contseg), "s"+str(contnodseg-1), punto2.name)
+                contseg += 1
+            else:
+                AddSegment(current_graph, "S"+str(contseg), punto1.name, punto2.name)
+                contseg += 1
+            if graphcanvas is not None:
+                graphcanvas.destroy()
+            fig, ax = plt.subplots()
+            Plot(current_graph)
+            figuracanvas = FigureCanvasTkAgg(fig, master=graphshow)
+            figuracanvas.draw()
+            figuracanvas.mpl_connect("button_press_event", addhandseg)
+            graphcanvas = figuracanvas.get_tk_widget()
+            graphcanvas.config(width=800, height=600)
+            graphcanvas.pack()
+            punto1, punto2 = None, None
+
+##################################################################################################################################################
+################################################### INTERFAZ #####################################################################################
+##################################################################################################################################################
 ventana = tk.Tk()
-ventana.geometry("800x400")
-ventana.columnconfigure(0,weight=1)
-ventana.columnconfigure(1, weight=3)
-ventana.rowconfigure(0, weight=3)
+ventana.columnconfigure(0, weight=1)
+ventana.columnconfigure(1, weight=10)
 
 izquierda = tk.LabelFrame(ventana, text="Control")
-izquierda.grid(row=0, column=0, sticky="nsew")
-izquierda.rowconfigure([0,1,2],weight=1)
-izquierda.columnconfigure(0, weight=1)
-derecha = tk.LabelFrame(ventana, text="Grafica")
-derecha.grid(row=0, column=1, sticky="nsew")
-derecha.columnconfigure(0, weight=1)
-derecha.rowconfigure(0, weight=1)
+izquierda.grid(column=0, pady=5, padx=5, sticky="nsew")
+derecha = tk.LabelFrame(ventana, text="Gráfica")
+derecha.grid(column=1, row=0, pady=5, padx=5, sticky="nsew")
 
-button1 = tk.Button(izquierda,text="Grafico Ejemplo", command=showexamplegraph)
-button1.grid(column=0, row=0, pady=5, sticky="nsew")
 
-fileframe = tk.LabelFrame(izquierda, text="Archivos")
-fileframe.grid(column=0, row=1, padx=5, pady=5, sticky="nsew")
-fileframe.columnconfigure(0, weight=1)
-fileframe.rowconfigure(0, weight=1)
-fileframe.rowconfigure(1, weight=1)
-infile = tk.Entry(fileframe)
-infile.grid(row=0, column=0 ,pady=5, sticky="nsew")
-btnfile = tk.Button(fileframe, text="Cargar Grafo", command=showfilegraph)
-btnfile.grid(row=1, column=0, pady=5, sticky="nsew")
+###EJEMPLO###
 
-nodeframe = tk.LabelFrame(izquierda, text="Nodos")
-nodeframe.grid(column=0, row=2, pady=5, padx=5, sticky="nsew")
-nodeframe.rowconfigure(0, weight=1)
-nodeframe.rowconfigure(1, weight=1)
-nodeframe.columnconfigure(0, weight=1)
-selnode = tk.Entry(nodeframe)
-selnode.grid(column=0, row=0, pady=5, sticky="nsew")
-btnnode = tk.Button(nodeframe, text="Seleccionar Nodo", command=shownode)
-btnnode.grid(column=0, row=1, pady=5, sticky="nsew")
+basic = tk.LabelFrame(izquierda, text="Controles Básicos")
+basic.pack(fill=tk.BOTH, padx=5)
+button1 = tk.Button(basic, text="Grafico Ejemplo", command=showexamplegraph)
+button1.pack(pady=5, padx=5)
 
-canvas_picture = tk.Frame(derecha)
-canvas_picture.grid(column=1, rowspan=5, pady=5, padx=5, sticky="nsew")
-canvas_picture.columnconfigure(0, weight=1)
-canvas_picture.rowconfigure(0,weight=1)
+create = tk.Button(basic, text="Crear Grafo", command=createblank)
+create.pack(padx=5, pady=5)
+
+
+###FICHERO###
+
+fichero = tk.LabelFrame(izquierda, text="Fichero")
+fichero.columnconfigure(0, weight=1)
+fichero.columnconfigure(1, weight=5)
+fichero.rowconfigure([0,1], weight=1)
+fichero.pack(fill=tk.BOTH, padx=5)
+    #LEYENDA DEL CUADRO#
+filetext = tk.Label(fichero, text="Nombre de archivo:")
+filetext.grid(row=0, column=0, pady=5, sticky="w")
+    #CUADRO DE TEXTO#
+infile = tk.Entry(fichero)
+infile.grid(row=0, column=1, pady=5, padx=5, sticky="nsew")
+    #BOTÓN#
+btnfile = tk.Button(fichero, text="Cargar Grafo", command=showfilegraph)
+btnfile.grid(row=1, column=0, columnspan=2, pady=5)
+
+
+###VER VECINOS DE NODOS###
+
+nodefr = tk.LabelFrame(izquierda, text="Ver Nodo")
+nodefr.columnconfigure(0, weight=1)
+nodefr.columnconfigure(1, weight=5)
+nodefr.rowconfigure([0,1], weight=1)
+nodefr.pack(fill=tk.BOTH, padx=5)
+    #LEYENDA DEL CUADRO#
+selnodtext = tk.Label(nodefr, text="Nombre del nodo:")
+selnodtext.grid(row=0, column=0, pady=5, sticky="w")
+    #CUADRO DE TEXTO#
+selnode = tk.Entry(nodefr)
+selnode.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
+    #BOTÓN#
+btnnode = tk.Button(nodefr, text="Seleccionar Nodo", command=shownode)
+btnnode.grid(row=1, column=0, columnspan=2, pady=5)
+
+
+###AÑADIR NODO###
+
+addnodefr = tk.LabelFrame(izquierda, text="Añadir Nodo")
+addnodefr.rowconfigure([0,1,2,3], weight=1)
+addnodefr.columnconfigure(0,weight=1)
+addnodefr.columnconfigure(1,weight=5)
+addnodefr.pack(fill=tk.BOTH, padx=5, pady=5)
+    #LEYENDA NOMBRE#
+nnametext = tk.Label(addnodefr,text="Nombre:")
+nnametext.grid(row=0, column=0, pady=5, sticky="ew")
+    #CUADRO DE TEXTO#
+nodename = tk.Entry(addnodefr)
+nodename.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
+    #LEYENDA COORDENADA X#
+xtext = tk.Label(addnodefr, text="Coordenada X:")
+xtext.grid(row=1, column=0, pady=5, sticky="ew")
+    #CUADRO DE TEXTO#
+nodex = tk.Entry(addnodefr)
+nodex.grid(row=1, column=1, padx=5, pady=5, sticky="nsew")
+    #LEYENDA COORDENADA Y#
+ytext = tk.Label(addnodefr, text="Coordenada Y:")
+ytext.grid(row=2, column=0, pady=5, sticky="ew")
+    #CUADRO DE TEXTO#
+nodey = tk.Entry(addnodefr)
+nodey.grid(row=2, column=1, padx=5, pady=5, sticky="nsew")
+    #BOTÓN AÑADIR NODO#
+btnaddnode = tk.Button(addnodefr, text="Añadir Nodo", command=addnodei)
+btnaddnode.grid(row=3, column=1, padx=5, pady=5)
+    #BOTÓN AÑADIR NODO MANUALMENTE#
+btnhandnode = tk.Button(addnodefr, text="Añadir Nodo A Mano", command=handnode)
+btnhandnode.grid(row=3, column=0, padx=5, pady=5)
+
+
+###AÑADIR SEGMENTO###
+
+addsegmentfr = tk.LabelFrame(izquierda, text="Añadir Segmento")
+addsegmentfr.rowconfigure([0,1,2,3], weight=1)
+addsegmentfr.columnconfigure(0, weight=1)
+addsegmentfr.columnconfigure(0, weight=5)
+addsegmentfr.pack(fill=tk.BOTH, padx=5, pady=5)
+    #LEYENDA NOMBRE SEGMENTO#
+snametext = tk.Label(addsegmentfr, text="Nombre:")
+snametext.grid(row=0, column=0, pady=5, sticky="ew")
+    #CUADRO DE TEXTO#
+segmentname = tk.Entry(addsegmentfr)
+segmentname.grid(row=0, column=1, pady=5, padx=5, sticky="nsew")
+    #LEYENDA ORÍGEN SEGMENTO#
+segorigtext = tk.Label(addsegmentfr, text="Orígen:")
+segorigtext.grid(row=1, column=0, pady=5, sticky="ew")
+    #CUADRO DE TEXTO#
+segmentorigin = tk.Entry(addsegmentfr)
+segmentorigin.grid(row=1, column=1, pady=5, padx=5, sticky="nsew")
+    #LEYENDA DESTINO SEGMENTO#
+segdesttext = tk.Label(addsegmentfr, text="Destino:")
+segdesttext.grid(row=2, column=0, pady=5, sticky="ew")
+    #CUADRO DE TEXTO#
+segmentdestination = tk.Entry(addsegmentfr)
+segmentdestination.grid(row=2, column=1, pady=5, padx=5, sticky="nsew")
+    #BOTÓN AÑADIR SEGMENTO#
+btnaddseg = tk.Button(addsegmentfr, text="Añadir Segmento", command=addsegmenti)
+btnaddseg.grid(row=3, column=1, padx=5, pady=5)
+    #BOTÓN AÑADIR SEGMENTO MANUALMENTE#
+btnhandseg = tk.Button(addsegmentfr, text="Añadir Seg. A Mano", command=handseg)
+btnhandseg.grid(row=3, column=0, padx=5, pady=5)
+
+
+###BORRAR NODO###
+
+borrarnodofr = tk.LabelFrame(izquierda, text="Borrar Nodo")
+borrarnodofr.columnconfigure(0, weight=1)
+borrarnodofr.columnconfigure(1,weight=5)
+borrarnodofr.rowconfigure([0,1,2],weight=1)
+borrarnodofr.pack(fill=tk.BOTH, padx=5, pady=5)
+    #LEYENDA DEL CUADRO#
+borrnodotext = tk.Label(borrarnodofr, text="Nombre del nodo:")
+borrnodotext.grid(row=0, column=0, pady=5)
+    #CUADRO DE TEXTO#
+inborrarnodo = tk.Entry(borrarnodofr)
+inborrarnodo.grid(row=0, column=1, pady=5, padx=5, sticky="nsew")
+    #LEYENDA BORAR SEGMENTO#
+borrarsegtxt = tk.Label(borrarnodofr, text="Nombre del segmento")
+borrarsegtxt.grid(row=1, column=0, pady=5)
+    #CUADRO DE TEXTO#
+inborrarseg = tk.Entry(borrarnodofr)
+inborrarseg.grid(row=1, column=1, pady=5, padx=5, sticky="nsew")
+    #BOTÓN BORRAR NODO#
+btnborrarnodo = tk.Button(borrarnodofr, text="Borrar Nodo / Segmento", command=deletenodei)
+btnborrarnodo.grid(row=2, column=0, columnspan=2, pady=5)
+
+###MOSTRAR GRAFO###
+graphshow = tk.Frame(derecha)
+graphshow.pack(fill=tk.BOTH)
+graphcanvas = tk.Canvas(graphshow, width=800, height=600)
+graphcanvas.pack()
+
+###GUARDAR GRAFO###
+saving = tk.LabelFrame(derecha, text="Guardar grafo")
+saving.rowconfigure([0,1], weight=1)
+saving.columnconfigure(0, weight=1)
+saving.columnconfigure(1, weight=5)
+saving.pack(padx=5, pady=5, fill=tk.BOTH, side="bottom")
+    #LEYENDA NOMBRE ARCHIVO#
+insavetxt = tk.Label(saving, text="Nombre del archivo:")
+insavetxt.grid(row=0, column=0)
+    #CUADRO DE TEXTO#
+insave = tk.Entry(saving)
+insave.grid(row=0, column=1, sticky="ew", padx=5)
+    #BOTÓN GUARDAR GRAFO#
+save = tk.Button(saving, text="Guardar grafo", command=savegraph)
+save.grid(row=1, column=0, columnspan=2, padx=5, pady=5)
 
 ventana.mainloop()
+
+#dividir la interfaz en tres: control(mostrar ejemplo, crear grafo, ver nodo, ver camino mas corto) y visualizacion, grafica, editor de gráfica(añadir nodos, segmentos, borrar nodos y/o segmentos)
+
+'''global contseg, current_graph, graphcanvas, figuracanvas, contnodseg, punto1, punto2
+if usoseg:
+    x = round(event.xdata, 3)
+    y = round(event.ydata, 3)
+    if punto1 is None:
+        for node1 in current_graph.nodes:
+            if x == node.coordx and y == node.coordy:
+                point1 = node1
+            else:
+                point1 = [x,y]
+    elif punto1 is not None and point2 is None:
+        for node2 in current_graph.nodes:
+            if x == node.coordx and y == node.coordy:
+                point2 = node2
+            else:
+                point2 = [x,y]
+    elif point1 is not None and point2 is not None:
+        if point1 not in current_graph.nodes:
+            if AddNode(current_graph, Node("s"+str(contnodseg), punto1[0], punto1[1]):
+                contnodseg += 1
+        if point2 not in current_graph.nodes:
+            if AddNode(current_graph, Node("s"+str(contnodseg), punto2[0], punto2[1]):
+                contnodseg += 1
+        if AddSegment(current_graph, "S"+str(contseg), "s"+str(contnodseg-2), "s"+str(contnodseg-1)):
+            contseg += 1
+        '''
