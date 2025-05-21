@@ -6,6 +6,9 @@ from test_graph import *
 from graph import *
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+hola
+
+
 def Grafo1():
     G = CreateGraph_1()
     Plot(G)
