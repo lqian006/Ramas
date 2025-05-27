@@ -276,6 +276,20 @@ def addhandseg(event):
             graphcanvas.pack()
             punto1, punto2 = None, None
 
+'''def showshortpath():
+    global current_graph, graphcanvas, figuracanvas
+    if graphcanvas is not None:
+        graphcanvas.destroy()
+    current_graph = Graph()
+    fig, ax = plt.subplots()
+    FindShortestPath(current_graph, )
+    figuracanvas = FigureCanvasTkAgg(fig, master=graphshow)
+    figuracanvas.draw()
+    figuracanvas.mpl_connect("button_press_event", detectclick)
+    graphcanvas = figuracanvas.get_tk_widget()
+    graphcanvas.config(width=800, height=600)
+    graphcanvas.pack()'''
+
 ##################################################################################################################################################
 ################################################### INTERFAZ #####################################################################################
 ##################################################################################################################################################
@@ -425,6 +439,12 @@ inborrarseg.grid(row=1, column=1, pady=5, padx=5, sticky="nsew")
 btnborrarnodo = tk.Button(borrarnodofr, text="Borrar Nodo / Segmento", command=deletenodei)
 btnborrarnodo.grid(row=2, column=0, columnspan=2, pady=5)
 
+
+'''###VER SHORTEST PATH###
+
+vershtpath = tk.Button(izquierda, text="Ver Shortest Path", command=showshortpath)
+vershtpath.pack(pady=5, padx=5)'''
+
 ###MOSTRAR GRAFO###
 graphshow = tk.Frame(derecha)
 graphshow.pack(fill=tk.BOTH)
@@ -450,30 +470,3 @@ save.grid(row=1, column=0, columnspan=2, padx=5, pady=5)
 ventana.mainloop()
 
 #dividir la interfaz en tres: control(mostrar ejemplo, crear grafo, ver nodo, ver camino mas corto) y visualizacion, grafica, editor de gráfica(añadir nodos, segmentos, borrar nodos y/o segmentos)
-
-'''global contseg, current_graph, graphcanvas, figuracanvas, contnodseg, punto1, punto2
-if usoseg:
-    x = round(event.xdata, 3)
-    y = round(event.ydata, 3)
-    if punto1 is None:
-        for node1 in current_graph.nodes:
-            if x == node.coordx and y == node.coordy:
-                point1 = node1
-            else:
-                point1 = [x,y]
-    elif punto1 is not None and point2 is None:
-        for node2 in current_graph.nodes:
-            if x == node.coordx and y == node.coordy:
-                point2 = node2
-            else:
-                point2 = [x,y]
-    elif point1 is not None and point2 is not None:
-        if point1 not in current_graph.nodes:
-            if AddNode(current_graph, Node("s"+str(contnodseg), punto1[0], punto1[1]):
-                contnodseg += 1
-        if point2 not in current_graph.nodes:
-            if AddNode(current_graph, Node("s"+str(contnodseg), punto2[0], punto2[1]):
-                contnodseg += 1
-        if AddSegment(current_graph, "S"+str(contseg), "s"+str(contnodseg-2), "s"+str(contnodseg-1)):
-            contseg += 1
-        '''

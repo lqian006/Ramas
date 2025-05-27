@@ -1,5 +1,6 @@
 from node import *
 from segment import *
+from path import *
 import matplotlib.pyplot as plt
 import math
 
@@ -187,3 +188,35 @@ def deleteseg (g, n):
         return True
     else:
         return False
+
+def FindShortestPath(g, originnode, destinationnode):
+    node1 = None
+    nodefinal = None
+    for node in g.nodes:
+        if originnode == node.name:
+            node1 = node
+        elif destinationnode == node.name:
+            nodefinal = node
+    r = Distance(node1, nodefinal)
+    shortest = Path()
+    AddNodeToPath(g, shortest, node1.name)
+    i = 0
+    possiblepaths = []
+    while shortest.cost < r:
+        option = None
+        for node in shortest.nodes[-1].neighbors:
+            poss = Path()
+            if not ContainsNode(shortest, node):
+                AddNodeToPath(g, poss, node1.name)
+            AddNodeToPath(g, poss, node.name)
+            possiblepaths.append(poss)
+        min = 9999999.9
+        for element in possiblepaths:
+            lenght = element.cost + Distance(element.nodes[-1], nodefinal)
+            if lenght < min:
+                min = lenght
+                option = element.nodes[-1]
+        AddNodeToPath(g, shortest, option.name)
+    PlotPath(g, shortest)
+
+

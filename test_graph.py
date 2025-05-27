@@ -14,10 +14,11 @@ print(clos)
 g2 = Graph()
 FileGraph(g2,"NodesFile.txt")
 g3 = CreateGraph_1()
-deletenode(g3, "B")
+'''deletenode(g3, "B")
 for node in g3.nodes:
     print(node.name)
 for segment in g3.segments:
-    print(segment.name)
+    print(segment.name)'''
 
+FindShortestPath(g3, "A", "C")
 #print(AddNeighbor(p1,n2))
