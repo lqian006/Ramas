@@ -1,8 +1,10 @@
+from InfoProject.airSpace import AirSpace
 from node import *
 from segment import *
 from path import *
 import matplotlib.pyplot as plt
 import math
+import heapq
 
 class Graph:
     def __init__(self):
@@ -13,7 +15,7 @@ def AddNode(g,n):
     i = 0
     encont = False
     while i < len(g.nodes) and encont == False:
-        if n.coordx == g.nodes[i].coordx and n.coordy == g.nodes[i].coordy:
+        if n.lon == g.nodes[i].lon and n.lat == g.nodes[i].lat:
             encont = True
         else:
             i += 1
@@ -37,7 +39,7 @@ def AddSegment  (g, name, nameOriginNode, nameDestinationNode):
             found2 = True
             node2 = node
     for segments in g.segments:
-        if segments.origin_node == node1 and segments.destination_node == node2:
+        if segments.origin == node1 and segments.destination == node2:
             found3 = True
     if found3:
         print("El segmento ya existe.")
@@ -55,21 +57,34 @@ def GetClosest (g,x,y):
     min = 9999999999999.9
     men = 0
     for node in g.nodes:
-        dist = math.sqrt((node.coordx - x) ** 2 + (node.coordy - y) ** 2)
+        dist = math.sqrt((node.lon - x) ** 2 + (node.lat - y) ** 2)
         if dist < min:
             min = dist
             men = node.name
     return men
 
 def Plot (g):
-    for punto in g.nodes:
-        plt.plot(punto.coordx,punto.coordy, marker = "o", color = "red")
-        plt.text(punto.coordx+0.25, punto.coordy+0.25, punto.name, fontsize = 7.5, color = "green")
-    for linea in g.segments:
-        plt.annotate("",(linea.destination_node.coordx,linea.destination_node.coordy),(linea.origin_node.coordx,linea.origin_node.coordy),arrowprops=dict(arrowstyle="->", color="blue",lw=1.5))
-        plt.text((linea.origin_node.coordx+linea.destination_node.coordx)/2,(linea.origin_node.coordy+linea.destination_node.coordy)/2,linea.cost,fontsize=7.5)
-    plt.margins(x=0.25,y=0.25)
-    plt.grid(True)
+    print(type(g))
+    if isinstance(g, Graph):
+        for punto in g.nodes:
+            plt.plot(punto.lon, punto.lat, marker="o", color="red", markersize=5)
+            plt.text(punto.lon, punto.lat + 0.1, punto.name, fontsize=7.5, color="green")
+        for linea in g.segments:
+            plt.annotate("", (linea.destination.lon, linea.destination.lat), (linea.origin.lon, linea.origin.lat),
+                         arrowprops=dict(arrowstyle="->", color="cyan", lw=1.5, alpha=0.5))
+            plt.text((linea.origin.lon + linea.destination.lon) / 2, (linea.origin.lat + linea.destination.lat) / 2,
+                     linea.cost, fontsize=7.5)
+        plt.margins(x=0.25, y=0.25)
+        plt.grid(True)
+    elif isinstance(g, AirSpace):
+        for punto in g.navPoints:
+            plt.plot(punto.lon,punto.lat, marker = "o", color = "red", markersize=3)
+            plt.text(punto.lon, punto.lat+0.1, punto.name, fontsize = 4, color = "green")
+        for linea in g.navSegments:
+            plt.annotate("",(linea.destination.lon,linea.destination.lat),(linea.origin.lon,linea.origin.lat),arrowprops=dict(arrowstyle="->", color="cyan",lw=1.5, alpha=0.5))
+            plt.text((linea.origin.lon+linea.destination.lon)/2,(linea.origin.lat+linea.destination.lat)/2,linea.dist,fontsize=4)
+        plt.margins(x=0.25,y=0.25)
+        plt.grid(True)
 
 def PlotNode (g, nameOrigin):
     node1 = None
@@ -81,22 +96,22 @@ def PlotNode (g, nameOrigin):
             found = True
     if found == False:
         return False
-    plt.plot(node1.coordx, node1.coordy, color="blue", marker="o")
-    plt.text(node1.coordx+0.5, node1.coordy+0.5, node1.name, fontsize=7.5)
+    plt.plot(node1.lon, node1.lat, color="blue", marker="o")
+    plt.text(node1.lon+0.5, node1.lat+0.5, node1.name, fontsize=7.5)
     for point in node1.neighbors:
-        plt.plot(point.coordx, point.coordy, color="green", marker="o")
-        plt.text(point.coordx+0.5, point.coordy+0.5, point.name, fontsize=7.5)
+        plt.plot(point.lon, point.lat, color="green", marker="o")
+        plt.text(point.lon+0.5, point.lat+0.5, point.name, fontsize=7.5)
         neighbors.append(point)
     for element in g.nodes:
         if element != node1 and element not in neighbors:
-            plt.plot(element.coordx, element.coordy, color="gray", marker="o")
-            plt.text(element.coordx+0.25, element.coordy+0.25, element.name, fontsize=7.5)
+            plt.plot(element.lon, element.lat, color="gray", marker="o")
+            plt.text(element.lon+0.25, element.lat+0.25, element.name, fontsize=7.5)
     for segment in neighbors:
-        plt.annotate("", (segment.coordx, segment.coordy),
-                     (node1.coordx, node1.coordy),
+        plt.annotate("", (segment.lon, segment.lat),
+                     (node1.lon, node1.lat),
                      arrowprops=dict(arrowstyle="->", color="red", lw=1.5))
-        plt.text((node1.coordx + segment.coordx) / 2,
-                 (node1.coordy + segment.coordy) / 2, Distance(node1,segment), fontsize=7.5)
+        plt.text((node1.lon + segment.lon) / 2,
+                 (node1.lat + segment.lat) / 2, Distance(node1,segment), fontsize=7.5)
     plt.grid(True)
     plt.margins(x=0.25,y=0.25)
 
@@ -167,7 +182,7 @@ def deletenode (g, n):
         if node.name == n:
             node1 = node
     while i < len(g.segments):
-        if node1 == g.segments[i].origin_node or node1 == g.segments[i].destination_node:
+        if node1 == g.segments[i].origin or node1 == g.segments[i].destination:
             g.segments.remove(g.segments[i])
             i -= 1
         i += 1
@@ -189,34 +204,6 @@ def deleteseg (g, n):
     else:
         return False
 
-def FindShortestPath(g, originnode, destinationnode):
-    node1 = None
-    nodefinal = None
-    for node in g.nodes:
-        if originnode == node.name:
-            node1 = node
-        elif destinationnode == node.name:
-            nodefinal = node
-    r = Distance(node1, nodefinal)
-    shortest = Path()
-    AddNodeToPath(g, shortest, node1.name)
-    i = 0
-    possiblepaths = []
-    while shortest.cost < r:
-        option = None
-        for node in shortest.nodes[-1].neighbors:
-            poss = Path()
-            if not ContainsNode(shortest, node):
-                AddNodeToPath(g, poss, node1.name)
-            AddNodeToPath(g, poss, node.name)
-            possiblepaths.append(poss)
-        min = 9999999.9
-        for element in possiblepaths:
-            lenght = element.cost + Distance(element.nodes[-1], nodefinal)
-            if lenght < min:
-                min = lenght
-                option = element.nodes[-1]
-        AddNodeToPath(g, shortest, option.name)
-    PlotPath(g, shortest)
+
 
 

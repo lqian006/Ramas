@@ -2,7 +2,7 @@ from node import *
 class segment:
     def __init__(self, name, origin_node, destination_node,):
         self.name = name
-        self.origin_node = origin_node
-        self.destination_node = destination_node
+        self.origin = origin_node
+        self.destination = destination_node
         self.cost = Distance(origin_node,destination_node)
 

@@ -5,9 +5,13 @@ from PIL import Image, ImageTk
 import matplotlib as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
+
+
 from graph import *
+from airSpace import *
 
 current_graph = None        #gráfica actual
+currentairspace = None      #espacio aéreo actual
 graphcanvas = None          #widget del canvas
 figuracanvas = None         #figura que tiene la gráfica en cada instante
 clic = None                 #dónde está conectada la función de detectar clic?
@@ -27,6 +31,54 @@ def detectclick(event):
     punto = [x,y]
     print(punto)
 
+def showcatalonia():
+    global current_graph, graphcanvas, figuracanvas, contnodseg
+    A = AirSpace()
+    LoadAirSpace(A, "Cat")
+    if graphcanvas is not None:
+        graphcanvas.destroy()
+    fig, ax = plt.subplots()
+    PlotAirSpace(A)
+    figuracanvas = FigureCanvasTkAgg(fig, master=graphshow)
+    figuracanvas.draw()
+    figuracanvas.mpl_connect("button_press_event", detectclick)
+    graphcanvas = figuracanvas.get_tk_widget()
+    graphcanvas.config(width=800, height=600)
+    graphcanvas.pack()
+    contnodseg = 0
+
+def showspain():
+    global current_graph, graphcanvas, figuracanvas, contnodseg
+    A = AirSpace()
+    LoadAirSpace(A, "Spain")
+    if graphcanvas is not None:
+        graphcanvas.destroy()
+    fig, ax = plt.subplots()
+    PlotAirSpace(A)
+    figuracanvas = FigureCanvasTkAgg(fig, master=graphshow)
+    figuracanvas.draw()
+    figuracanvas.mpl_connect("button_press_event", detectclick)
+    graphcanvas = figuracanvas.get_tk_widget()
+    graphcanvas.config(width=800, height=600)
+    graphcanvas.pack()
+    contnodseg = 0
+
+def showeurope():
+    global current_graph, graphcanvas, figuracanvas, contnodseg, currentairspace
+    A = AirSpace()
+    LoadAirSpace(A, "ECAC")
+    if graphcanvas is not None:
+        graphcanvas.destroy()
+    fig, ax = plt.subplots()
+    PlotAirSpace(A)
+    figuracanvas = FigureCanvasTkAgg(fig, master=graphshow)
+    figuracanvas.draw()
+    figuracanvas.mpl_connect("button_press_event", detectclick)
+    graphcanvas = figuracanvas.get_tk_widget()
+    graphcanvas.config(width=800, height=600)
+    graphcanvas.pack()
+    contnodseg = 0
+
 def showexamplegraph():
     global current_graph, graphcanvas, figuracanvas, contnodseg
     current_graph = CreateGraph_1()
@@ -41,7 +93,6 @@ def showexamplegraph():
     graphcanvas.config(width=800, height=600)
     graphcanvas.pack()
     contnodseg = 0
-
 
 def showfilegraph():
     global current_graph, graphcanvas, figuracanvas
@@ -230,14 +281,14 @@ def addhandseg(event):
         y = round(event.ydata, 3)
         if punto1 is None:
             for node1 in current_graph.nodes:
-                if round(x) == round(node1.coordx) and round(y) == round(node1.coordy):
+                if round(x) == round(node1.lon) and round(y) == round(node1.lat):
                     punto1 = node1
                     break
                 else:
                     punto1 = [x,y]
         elif punto1 is not None and punto2 is None:
             for node2 in current_graph.nodes:
-                if round(x) == round(node2.coordx) and round(y) == round(node2.coordy):
+                if round(x) == round(node2.lon) and round(y) == round(node2.lat):
                     punto2 = node2
                     break
                 else:
@@ -276,19 +327,7 @@ def addhandseg(event):
             graphcanvas.pack()
             punto1, punto2 = None, None
 
-'''def showshortpath():
-    global current_graph, graphcanvas, figuracanvas
-    if graphcanvas is not None:
-        graphcanvas.destroy()
-    current_graph = Graph()
-    fig, ax = plt.subplots()
-    FindShortestPath(current_graph, )
-    figuracanvas = FigureCanvasTkAgg(fig, master=graphshow)
-    figuracanvas.draw()
-    figuracanvas.mpl_connect("button_press_event", detectclick)
-    graphcanvas = figuracanvas.get_tk_widget()
-    graphcanvas.config(width=800, height=600)
-    graphcanvas.pack()'''
+
 
 ##################################################################################################################################################
 ################################################### INTERFAZ #####################################################################################
@@ -307,11 +346,20 @@ derecha.grid(column=1, row=0, pady=5, padx=5, sticky="nsew")
 
 basic = tk.LabelFrame(izquierda, text="Controles Básicos")
 basic.pack(fill=tk.BOTH, padx=5)
-button1 = tk.Button(basic, text="Grafico Ejemplo", command=showexamplegraph)
-button1.pack(pady=5, padx=5)
+basic.rowconfigure([0,1,2], weight=1)
+basic.columnconfigure([0,1], weight=1)
+
+buttonCat = tk.Button(basic, text="Cataluña", command=showcatalonia)
+buttonCat.grid(row = 0, column = 0, pady=5, padx=5, sticky="ew")
+buttonSp = tk.Button(basic, text="España", command=showspain)
+buttonSp.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+buttonEu = tk.Button(basic, text="Europa", command=showeurope)
+buttonEu.grid(row=0, column=2, pady=5, padx=5, sticky="ew")
 
 create = tk.Button(basic, text="Crear Grafo", command=createblank)
-create.pack(padx=5, pady=5)
+create.grid(row = 1, column = 0, rowspan=3, padx=5, pady=5)
+example = tk.Button(basic, text="Ejemplo", command=showexamplegraph)
+example.grid(row=1, column=2, padx=5, pady=5)
 
 
 ###FICHERO###

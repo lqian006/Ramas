@@ -10,25 +10,20 @@ def AddNodeToPath(g, path, innode):
     i = 0
     node = None
     found = False
-    while i < len(g.nodes) and not found:
-        if innode == g.nodes[i].name:
+    while i < len(g.navPoints) and not found:
+        if innode.name == g.navPoints[i].name:
             found = True
-            node = g.nodes[i]
+            node = g.navPoints[i]
         i += 1
-    if len(path.nodes) < 1:
-        if found:
-            path.nodes.append(node)
-            return True
-        else:
-            print("No existe ese nodo en este grafo.")
-            return False
+    if ContainsNode(path, innode):
+        return False
     else:
-        if found:
+        if len(path.nodes) < 1:
+            path.nodes.append(node)
+        else:
             path.nodes.append(node)
             path.cost += Distance(path.nodes[-2], path.nodes[-1])
             return True
-        else:
-            return False
 
 def ContainsNode (p, n):
     found = False

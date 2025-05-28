@@ -3,7 +3,7 @@ from segment import *
 from graph import *
 
 
-print ("Probando el grafo...")
+'''print ("Probando el grafo...")
 G = CreateGraph_1()
 Plot(G)
 PlotNode(G,"B")
@@ -12,13 +12,11 @@ print(clos)
 clos = GetClosest(G,8,19)
 print(clos)
 g2 = Graph()
-FileGraph(g2,"NodesFile.txt")
+FileGraph(g2,"NodesFile.txt")'''
 g3 = CreateGraph_1()
-'''deletenode(g3, "B")
 for node in g3.nodes:
-    print(node.name)
+    print(node.__dict__)
 for segment in g3.segments:
-    print(segment.name)'''
+    print(segment.__dict__)
 
-FindShortestPath(g3, "A", "C")
 #print(AddNeighbor(p1,n2))

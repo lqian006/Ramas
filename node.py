@@ -2,8 +2,8 @@ import math
 class Node:
     def __init__(self, name, x, y):
         self.name = name
-        self.coordx = x
-        self.coordy = y
+        self.lon = x
+        self.lat = y
         self.neighbors = []
 
 def AddNeighbor(n1,n2):
@@ -21,8 +21,8 @@ def AddNeighbor(n1,n2):
         return True
 
 def Distance(n1,n2):
-    distx = float(n2.coordx) - float(n1.coordx)
-    disty = float(n2.coordy) - float(n1.coordy)
+    distx = float(n2.lon) - float(n1.lon)
+    disty = float(n2.lat) - float(n1.lat)
     dist = math.sqrt(distx**2+disty**2)
     redond = round(dist,2)
     return redond
