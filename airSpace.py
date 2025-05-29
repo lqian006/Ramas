@@ -7,6 +7,7 @@ from navSegment import *
 from navAirport import *
 from node import *
 from path import *
+from graph import *
 
 class AirSpace:
     def __init__(self):
@@ -166,10 +167,10 @@ def FindShortestPath(g, start_name, end_name):
     return None
 
 def PlotPath (g, p):
-    i = 1
+    i = 0
     graph.Plot(g)
     while i < len(p.nodes):
-        graph.plt.annotate("", (p.nodes[i].lon, p.nodes[i].lat),
+        plt.annotate("", (p.nodes[i].lon, p.nodes[i].lat),
                     (p.nodes[i-1].lon, p.nodes[i-1].lat),
                     arrowprops=dict(arrowstyle="->", color="red", lw=1.5))
         i+=1

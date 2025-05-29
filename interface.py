@@ -1,6 +1,8 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, ttk
 from PIL import Image, ImageTk
+import subprocess
+import os
 
 import matplotlib as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -11,7 +13,6 @@ from graph import *
 from airSpace import *
 
 current_graph = None        #gráfica actual
-currentairspace = None      #espacio aéreo actual
 graphcanvas = None          #widget del canvas
 figuracanvas = None         #figura que tiene la gráfica en cada instante
 clic = None                 #dónde está conectada la función de detectar clic?
@@ -23,18 +24,49 @@ contnodseg = 1
 punto = None                #coordenadas del último clic
 punto1 = None
 punto2 = None
+A = AirSpace()
+airmap = False
+graphmap = False
+pathor = ""
+pathdes = ""
+inpathor = None
+inpathdes = None
 
 def detectclick(event):
-    global punto
+    global punto, A, current_graph
     x = round(event.xdata,3)
     y = round(event.ydata,3)
-    punto = [x,y]
+    if airmap:
+        for nav in A.navPoints:
+            if round(x) == nav.lon and round(y) == nav.lat:
+                punto = nav
+                PlotNavPoint(A,punto)
+            else:
+                punto = [x,y]
+    elif graphmap:
+        for p in current_graph:
+            if round(x) == p.lon and round(y) == p.lat:
+                punto = p
+                PlotNode(current_graph, punto)
+            else:
+                punto = [x,y]
     print(punto)
 
 def showcatalonia():
-    global current_graph, graphcanvas, figuracanvas, contnodseg
+    global current_graph, graphcanvas, figuracanvas, contnodseg, A, pathdes, pathor, inpathdes, inpathor
     A = AirSpace()
     LoadAirSpace(A, "Cat")
+    optpathor = []
+    optpathdes = []
+    for port in A.navAirports:
+        optpathor.append(port.name)
+        optpathdes.append(port.name)
+    inpathor = ttk.Combobox(pathfr, values=optpathor)
+    inpathor.grid(row=0, column=1, pady=5, padx=5, sticky="ew")
+
+    inpathdes = ttk.Combobox(pathfr, values=optpathdes)
+    inpathdes.grid(row=1, column=1, pady=5, padx=5, sticky="ew")
+
     if graphcanvas is not None:
         graphcanvas.destroy()
     fig, ax = plt.subplots()
@@ -46,11 +78,24 @@ def showcatalonia():
     graphcanvas.config(width=800, height=600)
     graphcanvas.pack()
     contnodseg = 0
+    pathor = inpathor.get()
+    pathdes = inpathdes.get()
 
 def showspain():
-    global current_graph, graphcanvas, figuracanvas, contnodseg
+    global current_graph, graphcanvas, figuracanvas, contnodseg, A, pathdes, pathor, inpathdes, inpathor
     A = AirSpace()
     LoadAirSpace(A, "Spain")
+    optpathor = []
+    optpathdes = []
+    for port in A.navAirports:
+        optpathor.append(port.name)
+        optpathdes.append(port.name)
+    inpathor = ttk.Combobox(pathfr, values=optpathor)
+    inpathor.grid(row=0, column=1, pady=5, padx=5, sticky="ew")
+    pathor = inpathor.get()
+    inpathdes = ttk.Combobox(pathfr, values=optpathdes)
+    inpathdes.grid(row=1, column=1, pady=5, padx=5, sticky="ew")
+    pathdes = inpathdes.get()
     if graphcanvas is not None:
         graphcanvas.destroy()
     fig, ax = plt.subplots()
@@ -64,9 +109,20 @@ def showspain():
     contnodseg = 0
 
 def showeurope():
-    global current_graph, graphcanvas, figuracanvas, contnodseg, currentairspace
+    global current_graph, graphcanvas, figuracanvas, contnodseg, A, pathor, pathdes, inpathdes, inpathor
     A = AirSpace()
     LoadAirSpace(A, "ECAC")
+    optpathor = []
+    optpathdes = []
+    for port in A.navAirports:
+        optpathor.append(port.name)
+        optpathdes.append(port.name)
+    inpathor = ttk.Combobox(pathfr, values=optpathor)
+    inpathor.grid(row=0, column=1, pady=5, padx=5, sticky="ew")
+    pathor = inpathor.get()
+    inpathdes = ttk.Combobox(pathfr, values=optpathdes)
+    inpathdes.grid(row=1, column=1, pady=5, padx=5, sticky="ew")
+    pathdes = inpathdes.get()
     if graphcanvas is not None:
         graphcanvas.destroy()
     fig, ax = plt.subplots()
@@ -327,6 +383,91 @@ def addhandseg(event):
             graphcanvas.pack()
             punto1, punto2 = None, None
 
+def seegoogleearth():
+    global A
+    creargoogleearth(A)
+    google_earth = r"C:\Program Files\Google\Google Earth Pro\client\googleearth.exe"
+    airspace = r"C:\Users\Usuario\PyCharmMiscProject\InfoProject\AirSpace.kml"
+    subprocess.Popen([google_earth, airspace])
+
+def creargoogleearth(a):
+    with open("AirSpace.kml", "w", encoding="utf-8") as f:
+        f.write('<kml xmlns="http://www.opengis.net/kml/2.2">\n')
+        f.write('<Document>\n')
+        for point in a.navPoints:
+            f.write('\t<Placemark> <name>{}</name>\n'.format(point.name))
+            f.write('\t\t<Point>\n')
+            f.write('\t\t\t<coordinates>\n')
+            f.write('\t\t\t\t{},{}\n'.format(point.lon, point.lat))
+            f.write('\t\t\t</coordinates>\n')
+            f.write('\t\t</Point>\n')
+            f.write('\t</Placemark>\n')
+        for line in a.navSegments:
+            f.write('\t<Placemark>\n')
+            f.write('\t\t<LineString>\n')
+            f.write('\t\t\t<altitudeMode>clampToGround</altitudeMode>\n')
+            f.write('\t\t\t<extrude>1</extrude>\n')
+            f.write('\t\t\t<tessellate>1</tessellate>\n')
+            f.write('\t\t\t\t<coordinates>\n')
+            f.write('\t\t\t\t\t{},{}\n'.format(line.origin.lon, line.origin.lat))
+            f.write('\t\t\t\t\t{},{}\n'.format(line.destination.lon, line.destination.lat))
+            f.write('\t\t\t\t</coordinates>\n')
+            f.write('\t\t</LineString>\n')
+            f.write('\t</Placemark>\n')
+        f.write('</Document>\n')
+        f.write('</kml>')
+    return True
+
+def showshortpath():
+    global A, graphcanvas, figuracanvas, punto1, punto2, pathor, pathdes, inpathdes, inpathor
+    pathor = inpathor.get()
+    pathdes = inpathdes.get()
+    if graphcanvas is not None:
+        graphcanvas.destroy()
+    fig, ax = plt.subplots()
+    path = FindShortestPath(A, pathor, pathdes)
+    PlotPath(A, path)
+    figuracanvas = FigureCanvasTkAgg(fig, master=graphshow)
+    figuracanvas.draw()
+    figuracanvas.mpl_connect("button_press_event", addhandseg)
+    graphcanvas = figuracanvas.get_tk_widget()
+    graphcanvas.config(width=800, height=600)
+    graphcanvas.pack()
+    punto1, punto2 = None, None
+
+def simplemode():
+    global graphmap, airmap
+    graphmap = True
+    airmap = False
+    buttonCat.grid_remove()
+    buttonSp.grid_remove()
+    buttonEu.grid_remove()
+    addnodefr.pack(fill=tk.BOTH, padx=5, pady=5)
+    addsegmentfr.pack(fill=tk.BOTH, padx=5, pady=5)
+    borrarnodofr.pack(fill=tk.BOTH, padx=5, pady=5)
+    example.grid(row=1, column=2, pady=5, sticky="w")
+    create.grid(row=1, column=0, pady=5, sticky="e")
+    googleearth.pack_forget()
+    btnsimplebound.config(bg="black")
+    btncomplexbound.config(bg="#f0f0f0")
+    pathfr.pack_forget()
+
+def complexmode():
+    global graphmap, airmap
+    graphmap = False
+    airmap = True
+    buttonCat.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
+    buttonSp.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+    buttonEu.grid(row=0, column=2, padx=5, pady=5, sticky="ew")
+    addnodefr.pack_forget()
+    addsegmentfr.pack_forget()
+    borrarnodofr.pack_forget()
+    example.grid_remove()
+    create.grid_remove()
+    googleearth.pack(pady=5, padx=10)
+    btnsimplebound.config(bg="#f0f0f0")
+    btncomplexbound.config(bg="black")
+    pathfr.pack(fill=tk.BOTH, pady=5, padx=5)
 
 
 ##################################################################################################################################################
@@ -335,31 +476,38 @@ def addhandseg(event):
 ventana = tk.Tk()
 ventana.columnconfigure(0, weight=1)
 ventana.columnconfigure(1, weight=10)
+ventana.columnconfigure(2, weight=1)
 
 izquierda = tk.LabelFrame(ventana, text="Control")
 izquierda.grid(column=0, pady=5, padx=5, sticky="nsew")
-derecha = tk.LabelFrame(ventana, text="Gráfica")
-derecha.grid(column=1, row=0, pady=5, padx=5, sticky="nsew")
+centro = tk.LabelFrame(ventana, text="Gráfica")
+centro.grid(column=1, row=0, pady=5, padx=5, sticky="nsew")
+derecha = tk.LabelFrame(ventana, text="Edición")
+derecha.grid(column=2, row=0, pady=5, padx=5, sticky="nsew")
 
 
-###EJEMPLO###
+    ###FRAME IZQUIERDO###
+###MUESTRAS###
 
-basic = tk.LabelFrame(izquierda, text="Controles Básicos")
+basic = tk.LabelFrame(izquierda, text="Ver")
 basic.pack(fill=tk.BOTH, padx=5)
-basic.rowconfigure([0,1,2], weight=1)
-basic.columnconfigure([0,1], weight=1)
+basic.rowconfigure([0,1], weight=1)
+basic.columnconfigure([0,1,2], weight=1)
 
-buttonCat = tk.Button(basic, text="Cataluña", command=showcatalonia)
-buttonCat.grid(row = 0, column = 0, pady=5, padx=5, sticky="ew")
+    #BOTÓN CATALUÑA#
+buttonCat = tk.Button(basic, text="Cataluña", command=showcatalonia, default="disabled")
+#buttonCat.grid(row = 0, column = 0, pady=5, padx=5, sticky="ew")
+    #BOTÓN ESPAÑA#
 buttonSp = tk.Button(basic, text="España", command=showspain)
-buttonSp.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+#buttonSp.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+    #BOTÓN EUROPA#
 buttonEu = tk.Button(basic, text="Europa", command=showeurope)
-buttonEu.grid(row=0, column=2, pady=5, padx=5, sticky="ew")
+#buttonEu.grid(row=0, column=2, pady=5, padx=5, sticky="ew")
 
 create = tk.Button(basic, text="Crear Grafo", command=createblank)
-create.grid(row = 1, column = 0, rowspan=3, padx=5, pady=5)
+create.grid(row = 1, column = 0, padx=5, pady=5, sticky="e")
 example = tk.Button(basic, text="Ejemplo", command=showexamplegraph)
-example.grid(row=1, column=2, padx=5, pady=5)
+example.grid(row=1, column=2, padx=5, pady=5, sticky="w")
 
 
 ###FICHERO###
@@ -398,9 +546,78 @@ btnnode = tk.Button(nodefr, text="Seleccionar Nodo", command=shownode)
 btnnode.grid(row=1, column=0, columnspan=2, pady=5)
 
 
+###VER SHORTEST PATH###
+
+pathfr = tk.LabelFrame(izquierda, text="Ver camino")
+pathfr.rowconfigure([0,1,2], weight=1)
+pathfr.columnconfigure([0,1], weight=1)
+pathortxt = tk.Label(pathfr, text="Aeropuerto de origen:")
+pathortxt.grid(row=0, column=0, pady=5)
+
+
+pathdestxt = tk.Label(pathfr, text="Aeropuerto de destino")
+pathdestxt.grid(row=1, column=0, pady=5)
+
+vershtpath = tk.Button(pathfr, text="Ver Shortest Path", command=showshortpath)
+vershtpath.grid(row=2, column=0, columnspan=2, pady=5)
+
+
+
+    ###FRAME CENTRAL###
+
+###MOSTRAR GRAFO###
+graphshow = tk.Frame(centro)
+graphshow.pack(fill=tk.BOTH)
+
+modo = tk.Frame(centro)
+modo.columnconfigure([0,1], weight=1)
+modo.rowconfigure(0, weight=1)
+modo.pack(padx=5, pady=5)
+
+btnsimplebound = tk.Frame(modo, bg="black")
+btnsimplebound.grid(row=0, column=0, sticky="e", pady=5, padx=5)
+btnsimplebound2 = tk.Frame(btnsimplebound)
+btnsimplebound2.pack(padx=3, pady=3)
+btnsimple = tk.Button(btnsimplebound2, text="Práctica", command=simplemode)
+btnsimple.pack()
+
+btncomplexbound = tk.Frame(modo)
+btncomplexbound.grid(row=0, column=1, sticky="w", pady=5, padx=5)
+btncomplexbound2 = tk.Frame(btncomplexbound)
+btncomplexbound2.pack(padx=3, pady=3)
+btncomplex = tk.Button(btncomplexbound2, text="Mapas Reales", command=complexmode)
+btncomplex.pack()
+
+
+###LIENZO###
+graphcanvas = tk.Canvas(graphshow, width=800, height=600)
+graphcanvas.pack()
+
+###GUARDAR GRAFO###
+saving = tk.LabelFrame(centro, text="Guardar grafo")
+saving.rowconfigure([0,1], weight=1)
+saving.columnconfigure(0, weight=1)
+saving.columnconfigure(1, weight=5)
+saving.pack(padx=5, pady=5, fill=tk.BOTH, side="bottom")
+    #LEYENDA NOMBRE ARCHIVO#
+insavetxt = tk.Label(saving, text="Nombre del archivo:")
+insavetxt.grid(row=0, column=0)
+    #CUADRO DE TEXTO#
+insave = tk.Entry(saving)
+insave.grid(row=0, column=1, sticky="ew", padx=5)
+    #BOTÓN GUARDAR GRAFO#
+save = tk.Button(saving, text="Guardar grafo", command=savegraph)
+save.grid(row=1, column=1, padx=5, pady=5)
+
+googleearth = tk.Button(derecha, text="Ver en Google Earth", command=seegoogleearth)
+googleearth.pack(pady=5)
+
+
+    ####FRAME DERECHO###
+
 ###AÑADIR NODO###
 
-addnodefr = tk.LabelFrame(izquierda, text="Añadir Nodo")
+addnodefr = tk.LabelFrame(derecha, text="Añadir Nodo")
 addnodefr.rowconfigure([0,1,2,3], weight=1)
 addnodefr.columnconfigure(0,weight=1)
 addnodefr.columnconfigure(1,weight=5)
@@ -433,7 +650,7 @@ btnhandnode.grid(row=3, column=0, padx=5, pady=5)
 
 ###AÑADIR SEGMENTO###
 
-addsegmentfr = tk.LabelFrame(izquierda, text="Añadir Segmento")
+addsegmentfr = tk.LabelFrame(derecha, text="Añadir Segmento")
 addsegmentfr.rowconfigure([0,1,2,3], weight=1)
 addsegmentfr.columnconfigure(0, weight=1)
 addsegmentfr.columnconfigure(0, weight=5)
@@ -466,7 +683,7 @@ btnhandseg.grid(row=3, column=0, padx=5, pady=5)
 
 ###BORRAR NODO###
 
-borrarnodofr = tk.LabelFrame(izquierda, text="Borrar Nodo")
+borrarnodofr = tk.LabelFrame(derecha, text="Borrar Nodo")
 borrarnodofr.columnconfigure(0, weight=1)
 borrarnodofr.columnconfigure(1,weight=5)
 borrarnodofr.rowconfigure([0,1,2],weight=1)
@@ -486,35 +703,6 @@ inborrarseg.grid(row=1, column=1, pady=5, padx=5, sticky="nsew")
     #BOTÓN BORRAR NODO#
 btnborrarnodo = tk.Button(borrarnodofr, text="Borrar Nodo / Segmento", command=deletenodei)
 btnborrarnodo.grid(row=2, column=0, columnspan=2, pady=5)
-
-
-'''###VER SHORTEST PATH###
-
-vershtpath = tk.Button(izquierda, text="Ver Shortest Path", command=showshortpath)
-vershtpath.pack(pady=5, padx=5)'''
-
-###MOSTRAR GRAFO###
-graphshow = tk.Frame(derecha)
-graphshow.pack(fill=tk.BOTH)
-graphcanvas = tk.Canvas(graphshow, width=800, height=600)
-graphcanvas.pack()
-
-###GUARDAR GRAFO###
-saving = tk.LabelFrame(derecha, text="Guardar grafo")
-saving.rowconfigure([0,1], weight=1)
-saving.columnconfigure(0, weight=1)
-saving.columnconfigure(1, weight=5)
-saving.pack(padx=5, pady=5, fill=tk.BOTH, side="bottom")
-    #LEYENDA NOMBRE ARCHIVO#
-insavetxt = tk.Label(saving, text="Nombre del archivo:")
-insavetxt.grid(row=0, column=0)
-    #CUADRO DE TEXTO#
-insave = tk.Entry(saving)
-insave.grid(row=0, column=1, sticky="ew", padx=5)
-    #BOTÓN GUARDAR GRAFO#
-save = tk.Button(saving, text="Guardar grafo", command=savegraph)
-save.grid(row=1, column=0, columnspan=2, padx=5, pady=5)
-
 ventana.mainloop()
 
 #dividir la interfaz en tres: control(mostrar ejemplo, crear grafo, ver nodo, ver camino mas corto) y visualizacion, grafica, editor de gráfica(añadir nodos, segmentos, borrar nodos y/o segmentos)
