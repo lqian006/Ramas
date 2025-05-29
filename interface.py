@@ -545,12 +545,12 @@ def complexmode():
 
 def creditos():
     global imagen, graphcanvas
-    imagen = Image.open("C:\\Users\\Usuario\\Pictures\\Camera Roll\\Imagen de WhatsApp 2025-05-29 a las 14.56.14_23aaeb7e.jpg")
+    imagen = Image.open("C:\\Users\\Usuario\\PyCharmMiscProject\\InfoProject\\Imagen de WhatsApp 2025-05-29 a las 14.56.14_23aaeb7e.jpg")
     imagen = imagen.resize((800, 400))
     imagen_tk = ImageTk.PhotoImage(imagen)
     graphcanvas.create_image(0,0, anchor="nw", image=imagen_tk)
     graphcanvas.image = imagen_tk
-    
+
 
 
 ##################################################################################################################################################
