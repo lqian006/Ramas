@@ -31,26 +31,97 @@ pathor = ""
 pathdes = ""
 inpathor = None
 inpathdes = None
+texto = ""
+texto2 = ""
+texto3 = ""
+inlon = None
+inlat = None
+indata = None
+imagen = None
 
 def detectclick(event):
-    global punto, A, current_graph
+    global punto, A, current_graph, graphcanvas, figuracanvas, usoseg, usonodos, text0, texto2, texto3, indata, inlon, inlat
+    found = False
     x = round(event.xdata,3)
     y = round(event.ydata,3)
-    if airmap:
-        for nav in A.navPoints:
-            if round(x) == nav.lon and round(y) == nav.lat:
-                punto = nav
-                PlotNavPoint(A,punto)
+    if not usoseg and not usonodos:
+        if airmap:
+            for nav in A.navPoints:
+                if x == round(nav.lon,3) and y == round(nav.lat,3):
+                    punto = nav
+                    texto=punto.name
+                    texto2=punto.lat
+                    texto3=punto.lon
+                    indata = tk.Label(datafr, text=texto)
+                    inlat = tk.Label(datafr, text=texto2)
+                    inlon = tk.Label(datafr, text=texto3)
+                    indata.grid(row=0, column=1)
+                    inlat.grid(row=1, column=1)
+                    inlon.grid(row=2, column=1)
+                    found = True
+                    break
+            if found:
+                if graphcanvas is not None:
+                    graphcanvas.destroy()
+                fig, ax = plt.subplots()
+                PlotNavPoint(A, punto.name)
+                figuracanvas = FigureCanvasTkAgg(fig, master=graphshow)
+                figuracanvas.draw()
+                figuracanvas.mpl_connect("button_press_event", detectclick)
+                graphcanvas = figuracanvas.get_tk_widget()
+                graphcanvas.config(width=800, height=600)
+                graphcanvas.pack()
             else:
                 punto = [x,y]
-    elif graphmap:
-        for p in current_graph:
-            if round(x) == p.lon and round(y) == p.lat:
-                punto = p
-                PlotNode(current_graph, punto)
+                if graphcanvas is not None:
+                    graphcanvas.destroy()
+                fig, ax = plt.subplots()
+                PlotAirSpace(A)
+                figuracanvas = FigureCanvasTkAgg(fig, master=graphshow)
+                figuracanvas.draw()
+                figuracanvas.mpl_connect("button_press_event", detectclick)
+                graphcanvas = figuracanvas.get_tk_widget()
+                graphcanvas.config(width=800, height=600)
+                graphcanvas.pack()
+        else:
+            for p in current_graph.nodes:
+                if round(x) == round(p.lon) and round(y) == round(p.lat):
+                    punto = p
+                    texto = punto.name
+                    texto2 = punto.lat
+                    texto3 = punto.lon
+                    indata = tk.Label(datafr, text=texto)
+                    inlat = tk.Label(datafr, text=texto2)
+                    inlon = tk.Label(datafr, text=texto3)
+                    indata.grid(row=0, column=1)
+                    inlat.grid(row=1, column=1)
+                    inlon.grid(row=2, column=1)
+                    found = True
+                    break
+            if found:
+                if graphcanvas is not None:
+                    graphcanvas.destroy()
+                fig, ax = plt.subplots()
+                PlotNode(current_graph, punto.name)
+                figuracanvas = FigureCanvasTkAgg(fig, master=graphshow)
+                figuracanvas.draw()
+                figuracanvas.mpl_connect("button_press_event", detectclick)
+                graphcanvas = figuracanvas.get_tk_widget()
+                graphcanvas.config(width=800, height=600)
+                graphcanvas.pack()
             else:
                 punto = [x,y]
-    print(punto)
+                if graphcanvas is not None:
+                    graphcanvas.destroy()
+                fig, ax = plt.subplots()
+                Plot(current_graph)
+                figuracanvas = FigureCanvasTkAgg(fig, master=graphshow)
+                figuracanvas.draw()
+                figuracanvas.mpl_connect("button_press_event", detectclick)
+                graphcanvas = figuracanvas.get_tk_widget()
+                graphcanvas.config(width=800, height=600)
+                graphcanvas.pack()
+        print(punto)
 
 def showcatalonia():
     global current_graph, graphcanvas, figuracanvas, contnodseg, A, pathdes, pathor, inpathdes, inpathor
@@ -315,7 +386,7 @@ def addhandnode(event):
         Plot(current_graph)
         figuracanvas = FigureCanvasTkAgg(fig, master=graphshow)
         figuracanvas.draw()
-        figuracanvas.mpl_connect("button_press_event", addhandnode)
+        figuracanvas.mpl_connect("button_press_event", handnode)
         graphcanvas = figuracanvas.get_tk_widget()
         graphcanvas.config(width=800, height=600)
         graphcanvas.pack()
@@ -377,7 +448,7 @@ def addhandseg(event):
             Plot(current_graph)
             figuracanvas = FigureCanvasTkAgg(fig, master=graphshow)
             figuracanvas.draw()
-            figuracanvas.mpl_connect("button_press_event", addhandseg)
+            figuracanvas.mpl_connect("button_press_event", detectclick)
             graphcanvas = figuracanvas.get_tk_widget()
             graphcanvas.config(width=800, height=600)
             graphcanvas.pack()
@@ -418,6 +489,8 @@ def creargoogleearth(a):
         f.write('</kml>')
     return True
 
+
+
 def showshortpath():
     global A, graphcanvas, figuracanvas, punto1, punto2, pathor, pathdes, inpathdes, inpathor
     pathor = inpathor.get()
@@ -451,6 +524,7 @@ def simplemode():
     btnsimplebound.config(bg="black")
     btncomplexbound.config(bg="#f0f0f0")
     pathfr.pack_forget()
+    googleearth.pack_forget()
 
 def complexmode():
     global graphmap, airmap
@@ -468,6 +542,15 @@ def complexmode():
     btnsimplebound.config(bg="#f0f0f0")
     btncomplexbound.config(bg="black")
     pathfr.pack(fill=tk.BOTH, pady=5, padx=5)
+
+def creditos():
+    global imagen, graphcanvas
+    imagen = Image.open("C:\\Users\\Usuario\\Pictures\\Camera Roll\\Imagen de WhatsApp 2025-05-29 a las 14.56.14_23aaeb7e.jpg")
+    imagen = imagen.resize((800, 400))
+    imagen_tk = ImageTk.PhotoImage(imagen)
+    graphcanvas.create_image(0,0, anchor="nw", image=imagen_tk)
+    graphcanvas.image = imagen_tk
+    
 
 
 ##################################################################################################################################################
@@ -546,6 +629,24 @@ btnnode = tk.Button(nodefr, text="Seleccionar Nodo", command=shownode)
 btnnode.grid(row=1, column=0, columnspan=2, pady=5)
 
 
+#DATOS NODOS#
+datafr = tk.LabelFrame(izquierda, text="Datos Nodo")
+datafr.rowconfigure([0,1,2], weight=1)
+datafr.columnconfigure([0,1], weight=1)
+datafr.pack(pady=5, padx=5, fill=tk.BOTH)
+datatxt = tk.Label(datafr, text="Nodo:")
+datatxt.grid(row=0, column=0)
+indata= tk.Label(datafr, text=texto)
+indata.grid(row=0, column=1)
+lattxt = tk.Label(datafr, text="Latitud:")
+lattxt.grid(row=1, column=0)
+inlat = tk.Label(datafr, text=texto2)
+inlat.grid(row=1, column=1)
+lontxt = tk.Label(datafr, text="Longitud:")
+lontxt.grid(row=2, column=0)
+inlon = tk.Label(datafr, text=texto3)
+inlon.grid(row=2, column=1)
+
 ###VER SHORTEST PATH###
 
 pathfr = tk.LabelFrame(izquierda, text="Ver camino")
@@ -560,6 +661,9 @@ pathdestxt.grid(row=1, column=0, pady=5)
 
 vershtpath = tk.Button(pathfr, text="Ver Shortest Path", command=showshortpath)
 vershtpath.grid(row=2, column=0, columnspan=2, pady=5)
+
+creditos = tk.Button(izquierda, text="creditos", command=creditos)
+creditos.pack(side="bottom", pady=5)
 
 
 
@@ -704,5 +808,3 @@ inborrarseg.grid(row=1, column=1, pady=5, padx=5, sticky="nsew")
 btnborrarnodo = tk.Button(borrarnodofr, text="Borrar Nodo / Segmento", command=deletenodei)
 btnborrarnodo.grid(row=2, column=0, columnspan=2, pady=5)
 ventana.mainloop()
-
-#dividir la interfaz en tres: control(mostrar ejemplo, crear grafo, ver nodo, ver camino mas corto) y visualizacion, grafica, editor de gráfica(añadir nodos, segmentos, borrar nodos y/o segmentos)

@@ -1,10 +1,11 @@
-from InfoProject.airSpace import AirSpace
+
 from node import *
 from segment import *
 from path import *
 import matplotlib.pyplot as plt
 import math
 import heapq
+import airSpace
 
 class Graph:
     def __init__(self):
@@ -64,7 +65,6 @@ def GetClosest (g,x,y):
     return men
 
 def Plot (g):
-    print(type(g))
     if isinstance(g, Graph):
         for punto in g.nodes:
             plt.plot(punto.lon, punto.lat, marker="o", color="red", markersize=5)
@@ -76,7 +76,7 @@ def Plot (g):
                      linea.cost, fontsize=7.5)
         plt.margins(x=0.25, y=0.25)
         plt.grid(True)
-    elif isinstance(g, AirSpace):
+    elif isinstance(g, airSpace.AirSpace):
         for punto in g.navPoints:
             plt.plot(punto.lon,punto.lat, marker = "o", color = "red", markersize=3)
             plt.text(punto.lon, punto.lat+0.1, punto.name, fontsize = 4, color = "green")

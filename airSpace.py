@@ -92,7 +92,7 @@ def PlotNavPoint (a, nameOrigin):
             found = True
     if found == False:
         return False
-    plt.plot(node1.lon, node1.lat, color="blue", marker="o")
+    plt.plot(node1.lon, node1.lat, color="blue", marker="o", markersize=3)
     plt.text(node1.lon+0.1, node1.lat+0.1, node1.name, fontsize=4)
     for point in node1.neighbors:
         plt.plot(point.lon, point.lat, color="green", marker="o", markersize=3)
@@ -167,11 +167,11 @@ def FindShortestPath(g, start_name, end_name):
     return None
 
 def PlotPath (g, p):
-    i = 0
+    i = 1
     graph.Plot(g)
     while i < len(p.nodes):
-        plt.annotate("", (p.nodes[i].lon, p.nodes[i].lat),
+        graph.plt.annotate("", (p.nodes[i].lon, p.nodes[i].lat),
                     (p.nodes[i-1].lon, p.nodes[i-1].lat),
                     arrowprops=dict(arrowstyle="->", color="red", lw=1.5))
         i+=1
-    #graph.plt.show()
+    #plt.show()
