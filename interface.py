@@ -551,6 +551,42 @@ def creditos():
     graphcanvas.create_image(0,0, anchor="nw", image=imagen_tk)
     graphcanvas.image = imagen_tk
 
+def showtwoneigh():
+    global A
+    creargoogleearth2(A)
+    google_earth2 = r"C:\Program Files\Google\Google Earth Pro\client\googleearth.exe"
+    airspace2 = r"C:\Users\Usuario\PyCharmMiscProject\InfoProject\AirSpaceExamen.kml"
+    subprocess.Popen([google_earth2, airspace2])
+
+def creargoogleearth2(a):
+    with open("AirSpaceExamen.kml", "w", encoding="utf-8") as f:
+        f.write('<kml xmlns="http://www.opengis.net/kml/2.2">\n')
+        f.write('<Document>\n')
+        for point in a.navPoints:
+            if len(point.neighbors) > 4:
+                f.write('\t<Placemark> <name>{}</name>\n'.format(point.name))
+                f.write('\t\t<Point>\n')
+                f.write('\t\t\t<coordinates>\n')
+                f.write('\t\t\t\t{},{}\n'.format(point.lon, point.lat))
+                f.write('\t\t\t</coordinates>\n')
+                f.write('\t\t</Point>\n')
+                f.write('\t</Placemark>\n')
+        '''for line in a.navSegments:
+            f.write('\t<Placemark>\n')
+            f.write('\t\t<LineString>\n')
+            f.write('\t\t\t<altitudeMode>clampToGround</altitudeMode>\n')
+            f.write('\t\t\t<extrude>1</extrude>\n')
+            f.write('\t\t\t<tessellate>1</tessellate>\n')
+            f.write('\t\t\t\t<coordinates>\n')
+            f.write('\t\t\t\t\t{},{}\n'.format(line.origin.lon, line.origin.lat))
+            f.write('\t\t\t\t\t{},{}\n'.format(line.destination.lon, line.destination.lat))
+            f.write('\t\t\t\t</coordinates>\n')
+            f.write('\t\t</LineString>\n')
+            f.write('\t</Placemark>\n')'''
+        f.write('</Document>\n')
+        f.write('</kml>')
+    return True
+
 
 
 ##################################################################################################################################################
@@ -661,6 +697,9 @@ pathdestxt.grid(row=1, column=0, pady=5)
 
 vershtpath = tk.Button(pathfr, text="Ver Shortest Path", command=showshortpath)
 vershtpath.grid(row=2, column=0, columnspan=2, pady=5)
+
+twoneigh = tk.Button(izquierda, text="Mostrar nodos con 4   + vecinos", command=showtwoneigh)
+twoneigh.pack(pady=5, padx=5)
 
 creditos = tk.Button(izquierda, text="creditos", command=creditos)
 creditos.pack(side="bottom", pady=5)
